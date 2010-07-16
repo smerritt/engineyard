@@ -318,53 +318,33 @@ private
       end
     end # UnlinkedApp
 
- # LinkedApp
-
-    class LinkedAppNotRunning < Empty
-      def apps
-        [{"name" => "rails232app",
-            "environments" => [{"ssh_username" => "turkey",
-                "instances" => [],
-                "name" => "giblets",
-                "apps" => [{"name" => "rails232app",
-                    "repository_uri" => git_remote}],
-                "instances_count" => 0,
-                "stack_name" => "nginx_mongrel",
-                "id" => 200,
-                "framework_env" => "production",
-                "app_master" => {}}],
+    class LinkedAppNotRunning < Base
+      def starting_apps
+        [{
+            "id" => 1001,
+            "name" => "rails232app",
             "repository_uri" => git_remote}]
       end
 
-      def environments
+      def starting_environments
         [{
             "ssh_username" => "turkey",
             "instances" => [],
             "name" => "giblets",
-            "apps" => [{
-                "name" => "rails232app",
-                "repository_uri" => git_remote}],
             "instances_count" => 0,
             "stack_name" => "nginx_mongrel",
             "id" => 200,
-           "framework_env" => "production",
-           "app_master" => {}}]
+            "framework_env" => "production",
+            "app_master" => {}}]
       end
 
-      def logs(env_id)
-        []
+      def starting_app_joins
+        [[1001, 200]]
       end
     end # LinkedAppNotRunning
 
     class LinkedAppRedMaster < LinkedApp
-      def apps
-        apps = super
-        apps[0]["environments"][0]["instances"][0]["status"] = "error"
-        apps[0]["environments"][0]["app_master"]["status"] = "error"
-        apps
-      end
-
-      def environments
+      def starting_environments
         envs = super
         envs[0]["instances"][0]["status"] = "error"
         envs[0]["app_master"]["status"] = "error"
