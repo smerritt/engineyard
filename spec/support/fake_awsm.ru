@@ -59,11 +59,11 @@ class FakeAwsm < Sinatra::Base
   end
 
   get "/api/v2/environments/:env_id/logs" do
-    {"logs" => @@scenario.logs(params[:env_id])}.to_json
+    {"logs" => @@scenario.logs(params[:env_id].to_i)}.to_json
   end
 
   get "/api/v2/environments/:env_id/keypairs" do
-    {"keypairs" => @@scenario.keypairs(params[:env_id])}.to_json
+    {"keypairs" => @@scenario.keys_for_env(params[:env_id].to_i)}.to_json
   end
 
   get "/api/v2/environments/:env_id/recipes" do
@@ -127,6 +127,146 @@ private
   end
 
   module Scenario
+    class Base
+      attr_accessor :git_remote
+
+      def initialize(git_remote)
+        self.git_remote = git_remote
+
+        @apps, @envs, @keys, @app_joins, @key_joins =
+          starting_apps, starting_environments, starting_keys,
+          starting_app_joins, starting_key_joins
+      end
+
+      def apps
+        @apps.dup.map do |app|
+          app.merge("environments" => joined_envs(app))
+        end
+      end
+
+      def environments
+        @envs.dup.map do |env|
+          env.merge("apps" => joined_apps(env))
+        end
+      end
+
+      def keys
+        @keys.dup
+      end
+
+      def keys_for_env(env_id)
+        env = @envs.find {|e| e["id"] == env_id }
+        related_objects(env, @keys, @key_joins.map{|j| j.reverse})
+      end
+
+      def logs(env_id)
+        [{
+            "id" => env_id,
+            "role" => "app_master",
+            "main" => "MAIN LOG OUTPUT",
+            "custom" => "CUSTOM LOG OUTPUT"
+          }]
+      end
+
+      private
+
+      def starting_apps()         [] end
+      def starting_environments() [] end
+      def starting_keys()         [] end
+      def starting_app_joins()    [] end
+      def starting_key_joins()    [] end
+
+      def joined_envs(app)
+        related_objects(app, @envs, @app_joins)
+      end
+
+      def joined_apps(env)
+        related_objects(env, @apps, @app_joins.map {|j| j.reverse})
+      end
+
+      def related_objects(obj, candidates, relation)
+        candidate_table = candidates.inject({}) do |table, candidate|
+          table.merge(candidate["id"] => candidate)
+        end
+
+        relation.find_all do |(obj_id, candidate_id)|
+          obj["id"] == obj_id
+        end.map do |(obj_id, candidate_id)|
+          candidate_table[candidate_id]
+        end
+      end
+    end
+
+    class LinkedApp < Base
+      private
+      def _instances
+        [{
+            "id" => 27220,
+            "role" => "app_master",
+            "name" => nil,
+            "status" => "running",
+            "amazon_id" => 'i-ddbbdd92',
+            "public_hostname" => "ec2-174-129-198-124.compute-1.amazonaws.com",
+          }, {
+            "id" => 22721,
+            "name" => nil,
+            "role" => "db_master",
+            "status" => "running",
+            "amazon_id" => "i-d4cdddbf",
+            "public_hostname" => "ec2-174-129-142-53.compute-1.amazonaws.com",
+          }, {
+            "id" => 22722,
+            "role" => "app",
+            "name" => nil,
+            "status" => "building",
+            "amazon_id" => "i-d2e3f1b9",
+            "public_hostname" => "ec2-72-44-46-66.compute-1.amazonaws.com",
+          }, {
+            "id" => 22723,
+            "role" => "util",
+            "name" => "fluffy",
+            "status" => "running",
+            "amazon_id" => "i-80e3f1eb",
+            "public_hostname" => "ec2-184-73-116-228.compute-1.amazonaws.com",
+          }]
+      end
+
+      def starting_apps
+        [{
+            "id" => 1001,
+            "name" => "rails232app",
+            "repository_uri" => git_remote}]
+      end
+
+      def starting_environments
+        [{
+            "id" => 200,
+            "ssh_username" => "turkey",
+            "instances" => _instances,
+            "name" => "giblets",
+            "instances_count" => 4,
+            "stack_name" => "nginx_mongrel",
+            "framework_env" => "production",
+            "app_master" => _instances[0]}]
+      end
+
+      def starting_app_joins
+        [[1001, 200]]
+      end
+
+      def starting_keys
+        [{
+            "id" => 3030,
+            "name" => "id_dsa.pub",
+            "public_key" => "ssh-dss AAAAB3NzaC1kc3MAAACBAOpTvNnhAZzl/LT7L2Oj2EQ3I4JMP0cwSwu+80zrNiWpChXcyIbLHDBQ76Vc2mFj4zNkV2s9WPSWZ4Pwbuq6FxfldI1tXJkRNFBJxnV8T3Wzxv/lCDXObveArhlMjlUw84juTFv5oQwE1Z3dPYTsytoKKeRlJLtNCic2Trjj6D97AAAAFQDLwRE+7tOTWha2rG5f036+6pYsNwAAAIBXsaU2a606eQxfwWojwiPui3eEM/1OAxOf09Ol1BhaSOSbVgjKrCN6ALfU+vE99oMSTXh1+xYlVXjm/1uyoQTZcj/Tn6r3nsnpdSy4BZHK7GmdLGGXG1SvOPRZShDlKvTKbRbaLojFMJlBWcquWexRrk2RqqtczSOeizESgpEI5AAAAIEApLlM2Hhw49hwydqKIU0yYh3gx30/fgjckwnS21n35sMnFvRIKY83PKBatr3q6t+DWP+b5BAlMDpq4yAl6wR/2x6+NnFqrCliqfXBnSOPqhejaGoGK1CWDcMBT5pOGFtce+QuhvuEn6oZQJID4pGIPL6bMBV22fKFLH38gQwS61c= spam@octavius",
+            "fingerprint" => "7e:ad:2b:9c:76:31:ff:01:1f:db:e9:b2:1f:ce:35:98"}]
+      end
+
+      def starting_key_joins
+        [[3030, 200]]
+      end
+    end  # LinkedApp
+
     class Empty
       attr_reader :git_remote
 
@@ -179,88 +319,7 @@ private
       end
     end # UnlinkedApp
 
-    class LinkedApp < Empty
-      def _instances
-        [{
-            "id" => 27220,
-            "role" => "app_master",
-            "name" => nil,
-            "status" => "running",
-            "amazon_id" => 'i-ddbbdd92',
-            "public_hostname" => "ec2-174-129-198-124.compute-1.amazonaws.com",
-          }, {
-            "id" => 22721,
-            "name" => nil,
-            "role" => "db_master",
-            "status" => "running",
-            "amazon_id" => "i-d4cdddbf",
-            "public_hostname" => "ec2-174-129-142-53.compute-1.amazonaws.com",
-          }, {
-            "id" => 22722,
-            "role" => "app",
-            "name" => nil,
-            "status" => "building",
-            "amazon_id" => "i-d2e3f1b9",
-            "public_hostname" => "ec2-72-44-46-66.compute-1.amazonaws.com",
-          }, {
-            "id" => 22723,
-            "role" => "util",
-            "name" => "fluffy",
-            "status" => "running",
-            "amazon_id" => "i-80e3f1eb",
-            "public_hostname" => "ec2-184-73-116-228.compute-1.amazonaws.com",
-          }]
-      end
-      private :_instances
-
-      def apps
-        [{"name" => "rails232app",
-            "environments" => [{"ssh_username" => "turkey",
-                "instances" => _instances,
-                "name" => "giblets",
-                "apps" => [{"name" => "rails232app",
-                    "repository_uri" => git_remote}],
-                "instances_count" => 1,
-                "stack_name" => "nginx_mongrel",
-                "id" => 200,
-                "framework_env" => "production",
-                "app_master" => _instances.first}],
-            "repository_uri" => git_remote}]
-      end
-
-      def environments
-        [{
-            "ssh_username" => "turkey",
-            "instances" => _instances,
-            "name" => "giblets",
-            "apps" => [{
-                "name" => "rails232app",
-                "repository_uri" => git_remote}],
-            "instances_count" => 1,
-            "stack_name" => "nginx_mongrel",
-            "id" => 200,
-            "framework_env" => "production",
-            "app_master" => _instances[0]}]
-      end
-
-      def logs(env_id)
-        [{
-          "id" => env_id,
-          "role" => "app_master",
-          "main" => "MAIN LOG OUTPUT",
-          "custom" => "CUSTOM LOG OUTPUT"
-        }]
-      end
-
-      def keypairs(env_id)
-        [{
-          "id" => "1",
-          "name" => "id_dsa.pub",
-          "public_key" => "ssh-dss AAAAB3NzaC1kc3MAAACBAOpTvNnhAZzl/LT7L2Oj2EQ3I4JMP0cwSwu+80zrNiWpChXcyIbLHDBQ76Vc2mFj4zNkV2s9WPSWZ4Pwbuq6FxfldI1tXJkRNFBJxnV8T3Wzxv/lCDXObveArhlMjlUw84juTFv5oQwE1Z3dPYTsytoKKeRlJLtNCic2Trjj6D97AAAAFQDLwRE+7tOTWha2rG5f036+6pYsNwAAAIBXsaU2a606eQxfwWojwiPui3eEM/1OAxOf09Ol1BhaSOSbVgjKrCN6ALfU+vE99oMSTXh1+xYlVXjm/1uyoQTZcj/Tn6r3nsnpdSy4BZHK7GmdLGGXG1SvOPRZShDlKvTKbRbaLojFMJlBWcquWexRrk2RqqtczSOeizESgpEI5AAAAIEApLlM2Hhw49hwydqKIU0yYh3gx30/fgjckwnS21n35sMnFvRIKY83PKBatr3q6t+DWP+b5BAlMDpq4yAl6wR/2x6+NnFqrCliqfXBnSOPqhejaGoGK1CWDcMBT5pOGFtce+QuhvuEn6oZQJID4pGIPL6bMBV22fKFLH38gQwS61c= spam@octavius",
-          "fingerprint" => "7e:ad:2b:9c:76:31:ff:01:1f:db:e9:b2:1f:ce:35:98"
-        }]
-      end
-    end # LinkedApp
+ # LinkedApp
 
     class LinkedAppNotRunning < Empty
       def apps
