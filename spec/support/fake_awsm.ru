@@ -10,7 +10,7 @@ class FakeAwsm < Sinatra::Base
     # every request. It makes sense; you hardly ever want to keep
     # state in your application object (accidentally or otherwise),
     # but in this situation that's exactly what we want to do.
-    @@scenario = Scenario::Base  # have to start somewhere
+    @@cloud_mock = Scenario::Base  # have to start somewhere
   end
 
   before { content_type "application/json" }
@@ -42,28 +42,28 @@ class FakeAwsm < Sinatra::Base
                      status(400)
                      return {"ok" => "false", "message" => "wtf is the #{params[:scenario]} scenario?"}.to_json
                    end
-    @@scenario = new_scenario.new(params[:remote])
+    @@cloud_mock = CloudMock.new(new_scenario.new(params[:remote]))
     {"ok" => "true"}.to_json
   end
 
   get "/api/v2/apps" do
-    {"apps" => @@scenario.apps}.to_json
+    {"apps" => @@cloud_mock.apps}.to_json
   end
 
   get "/api/v2/keypairs" do
-    {"keypairs" => @@scenario.keypairs}.to_json
+    {"keypairs" => @@cloud_mock.keypairs}.to_json
   end
 
   get "/api/v2/environments" do
-    {"environments" => @@scenario.environments}.to_json
+    {"environments" => @@cloud_mock.environments}.to_json
   end
 
   get "/api/v2/environments/:env_id/logs" do
-    {"logs" => @@scenario.logs(params[:env_id].to_i)}.to_json
+    {"logs" => @@cloud_mock.logs(params[:env_id].to_i)}.to_json
   end
 
   get "/api/v2/environments/:env_id/keypairs" do
-    {"keypairs" => @@scenario.keys_for_env(params[:env_id].to_i)}.to_json
+    {"keypairs" => @@cloud_mock.keys_for_env(params[:env_id].to_i)}.to_json
   end
 
   get "/api/v2/environments/:env_id/recipes" do
@@ -126,49 +126,116 @@ private
       params[:password] == "test"
   end
 
+  class CloudMock
+    def initialize(initial_conditions)
+      @apps, @envs, @keys, @app_joins, @key_joins = [], [], [], [], []
+      @next_id = 1
+
+      initial_conditions.starting_apps.each         {|a| add_app(a) }
+      initial_conditions.starting_environments.each {|e| add_environment(e) }
+      initial_conditions.starting_keys.each         {|k| add_key(k) }
+      initial_conditions.starting_app_joins.each    {|(app_id, env_id)| link_app(app_id, env_id) }
+      initial_conditions.starting_key_joins.each    {|(key_id, env_id)| link_key(key_id, env_id) }
+    end
+
+    def add_app(app)
+      app["id"] ||= next_id
+      @apps << app
+      app
+    end
+
+    def add_environment(env)
+      env["id"] ||= next_id
+      @envs << env
+      env
+    end
+
+    def add_key(key)
+      key["id"] ||= next_id
+      @keys << key
+      key
+    end
+
+    def link_app(app_id, env_id)
+      @apps.find {|a| a["id"] == app_id } or raise "No such app id:#{app_id}"
+      @envs.find {|e| e["id"] == env_id } or raise "No such environment id:#{env_id}"
+      @app_joins << [app_id, env_id]
+      @app_joins.uniq!
+    end
+
+    def link_key(key_id, env_id)
+      @keys.find {|k| k["id"] == key_id } or raise "No such key id:#{key_id}"
+      @envs.find {|e| e["id"] == env_id } or raise "No such environment id:#{env_id}"
+      @key_joins << [key_id, env_id]
+      @key_joins.uniq!
+    end
+
+    def apps
+      @apps.dup.map do |app|
+        app.merge("environments" => joined_envs(app))
+      end
+    end
+
+    def environments
+      @envs.dup.map do |env|
+        env.merge("apps" => joined_apps(env))
+      end
+    end
+
+    def keys
+      @keys
+    end
+
+    def keys_for_env(env_id)
+      env = @envs.find {|e| e["id"] == env_id }
+      related_objects(env, @keys, @key_joins.map{|j| j.reverse})
+    end
+
+    def logs(env_id)
+      [{
+          "id" => env_id,
+          "role" => "app_master",
+          "main" => "MAIN LOG OUTPUT",
+          "custom" => "CUSTOM LOG OUTPUT"
+        }]
+    end
+
+    private
+
+    def next_id
+      id = @next_id
+      @next_id += 1
+      id
+    end
+
+    def joined_envs(app)
+      related_objects(app, @envs, @app_joins)
+    end
+
+    def joined_apps(env)
+      related_objects(env, @apps, @app_joins.map {|j| j.reverse})
+    end
+
+    def related_objects(obj, candidates, relation)
+      candidate_table = candidates.inject({}) do |table, candidate|
+        table.merge(candidate["id"] => candidate)
+      end
+
+      relation.find_all do |(obj_id, candidate_id)|
+        obj["id"] == obj_id
+      end.map do |(obj_id, candidate_id)|
+        candidate_table[candidate_id]
+      end
+    end
+  end
+
   module Scenario
     class Base
       attr_accessor :git_remote
 
       def initialize(git_remote)
         self.git_remote = git_remote
-
-        @apps, @envs, @keys, @app_joins, @key_joins =
-          starting_apps, starting_environments, starting_keys,
-          starting_app_joins, starting_key_joins
       end
-
-      def apps
-        @apps.dup.map do |app|
-          app.merge("environments" => joined_envs(app))
-        end
-      end
-
-      def environments
-        @envs.dup.map do |env|
-          env.merge("apps" => joined_apps(env))
-        end
-      end
-
-      def keys
-        @keys.dup
-      end
-
-      def keys_for_env(env_id)
-        env = @envs.find {|e| e["id"] == env_id }
-        related_objects(env, @keys, @key_joins.map{|j| j.reverse})
-      end
-
-      def logs(env_id)
-        [{
-            "id" => env_id,
-            "role" => "app_master",
-            "main" => "MAIN LOG OUTPUT",
-            "custom" => "CUSTOM LOG OUTPUT"
-          }]
-      end
-
-      private
 
       def starting_apps()         [] end
       def starting_environments() [] end
@@ -176,29 +243,9 @@ private
       def starting_app_joins()    [] end
       def starting_key_joins()    [] end
 
-      def joined_envs(app)
-        related_objects(app, @envs, @app_joins)
-      end
-
-      def joined_apps(env)
-        related_objects(env, @apps, @app_joins.map {|j| j.reverse})
-      end
-
-      def related_objects(obj, candidates, relation)
-        candidate_table = candidates.inject({}) do |table, candidate|
-          table.merge(candidate["id"] => candidate)
-        end
-
-        relation.find_all do |(obj_id, candidate_id)|
-          obj["id"] == obj_id
-        end.map do |(obj_id, candidate_id)|
-          candidate_table[candidate_id]
-        end
-      end
     end
 
     class LinkedApp < Base
-      private
       def _instances
         [{
             "id" => 27220,
@@ -230,6 +277,7 @@ private
             "public_hostname" => "ec2-184-73-116-228.compute-1.amazonaws.com",
           }]
       end
+      private :_instances
 
       def starting_apps
         [{
