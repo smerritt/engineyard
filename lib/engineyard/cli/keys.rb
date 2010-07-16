@@ -1,0 +1,30 @@
+module EY
+  class CLI
+    class Keys < EY::Thor
+      # desc "add --file/-f PATH [--name/-n NAME --environment/-e ENVIRONMENT]",
+      #   "Add an ssh public key to your account, optionally specifying an destination environment."
+      # method_option :environment, :type => :string, :aliases => %w(-e),
+      #   :desc => "Environment on which to take down the maintenance page"
+      # method_option :verbose, :type => :boolean, :aliases => %w(-v),
+      #   :desc => "Be verbose"
+      # def add
+      #   app         = fetch_app(options[:app])
+      #   environment = fetch_environment(options[:environment], app)
+      #   EY.ui.info "Taking down maintenance page for '#{app.name}' in '#{environment.name}'"
+      # end
+
+      desc "list", "Show ssh keys on your account or an environment"
+      method_option :environment, :type => :string, :aliases => %w(-e),
+        :desc => "Environment of which to show keys"
+      def list
+        env = fetch_environment(options[:environment])
+        puts "Keys for #{env}"
+        key_table = env.keys.map do |key|
+          [key.name, key.fingerprint]
+        end
+        print_table key_table
+      end
+
+    end
+  end
+end
