@@ -287,15 +287,15 @@ private
       end
     end # Empty
 
-    class UnlinkedApp < Empty
-      def apps
+    class UnlinkedApp < Base
+      def starting_apps
         [{
+            "id" => 1001,
             "name" => "rails232app",
-            "environments" => [],
             "repository_uri" => git_remote}]
       end
 
-      def environments
+      def starting_environments
         [{
             "ssh_username" => "turkey",
             "instances" => [{
@@ -305,7 +305,6 @@ private
                 "role" => "solo",
                 "public_hostname" => "ec2-174-129-198-124.compute-1.amazonaws.com"}],
             "name" => "giblets",
-            "apps" => [],
             "instances_count" => 1,
             "stack_name" => "nginx_mongrel",
             "id" => 200,
