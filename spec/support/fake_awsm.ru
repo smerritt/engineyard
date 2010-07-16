@@ -10,7 +10,7 @@ class FakeAwsm < Sinatra::Base
     # every request. It makes sense; you hardly ever want to keep
     # state in your application object (accidentally or otherwise),
     # but in this situation that's exactly what we want to do.
-    @@scenario = Scenario::Empty  # have to start somewhere
+    @@scenario = Scenario::Base  # have to start somewhere
   end
 
   before { content_type "application/json" }
@@ -23,7 +23,7 @@ class FakeAwsm < Sinatra::Base
   put "/scenario" do
     new_scenario = case params[:scenario]
                    when "empty"
-                     Scenario::Empty
+                     Scenario::Base
                    when "one app, one environment, not linked"
                      Scenario::UnlinkedApp
                    when "two apps"
@@ -267,26 +267,6 @@ private
       end
     end  # LinkedApp
 
-    class Empty
-      attr_reader :git_remote
-
-      def initialize(git_remote)
-        @git_remote = git_remote
-      end
-
-      def apps
-        []
-      end
-
-      def environments
-        []
-      end
-
-      def keypairs(*args)
-        []
-      end
-    end # Empty
-
     class UnlinkedApp < Base
       def starting_apps
         [{
@@ -407,7 +387,7 @@ private
       end
     end # OneAppTwoEnvs
 
-    class TwoApps < Empty
+    class TwoApps < Base
       def railsapp_master
         {
           "status" => "running",
@@ -432,75 +412,47 @@ private
       end
       private :keycollector_master
 
-      def apps
+      def starting_apps
         [{
             "id" => 3202,
             "name" => "keycollector",
             "repository_uri" => "git@github.com:smerritt/keycollector.git",
-            "instances_count" => 0,
-            "ssh_username" => "deploy",
-            "environments" => [{
-                "apps" => [{
-                    "name" => "keycollector",
-                    "repository_uri" => "git@github.com:smerritt/keycollector.git",
-                    "id" => 3202}],
-                "name" => "keycollector_production",
-                "app_master" => keycollector_master,
-                "instances" => [keycollector_master],
-                "id" => 4359,
-                "framework_env" => "production",
-                "stack_name" => "nginx_mongrel"}],
           }, {
-            "name" => "rails232app",
-            "repository_uri" => "git://github.com/smerritt/rails232app.git",
             "id" => 6125,
-            "environments" => [{
-                "apps" => [{
-                    "name" => "rails232app",
-                    "repository_uri" => "git://github.com/smerritt/rails232app.git",
-                    "id" => 6125}],
-                "instances_count" => 1,
-                "ssh_username" => "turkey",
-                "name" => "giblets",
-                "app_master" => railsapp_master,
-                "instances" => [railsapp_master],
-                "framework_env" => "production",
-                "id" => 200,
-                "stack_name" => "nginx_unicorn"}],
-          }]
+            "name" => "rails232app",
+            "repository_uri" => "git://github.com/smerritt/rails232app.git"}]
       end
 
-      def environments
+      def starting_app_joins
+        [
+          [6125, 200],
+          [3202, 439],
+        ]
+      end
+
+      def starting_environments
         [{
             "id" => 200,
             "name" => "giblets",
+            "framework_env" => "staging",
             "ssh_username" => "turkey",
             "instances_count" => 1,
             "instances" => [railsapp_master],
             "app_master" => railsapp_master,
             "stack_name" => "nginx_unicorn",
-            "apps" => [{
-                "name" => "rails232app",
-                "repository_uri" => "git://github.com/smerritt/rails232app.git",
-                "id" => 6125}],
           }, {
-            "id" => 4359,
+            "id" => 439,
             "framework_env" => "production",
             "name" => "keycollector_production",
             "ssh_username" => "deploy",
             "stack_name" => "nginx_mongrel",
             "instances_count" => 1,
             "instances" => [keycollector_master],
-            "app_master" => keycollector_master,
-            "apps" => [{
-                "name" => "keycollector",
-                "repository_uri" => "git@github.com:smerritt/keycollector.git",
-                "id" => 3202}],
-          }]
+            "app_master" => keycollector_master}]
       end
     end # TwoApps
 
-    class OneAppManySimilarlyNamedEnvs < Base 
+    class OneAppManySimilarlyNamedEnvs < Base
       def starting_apps
         [{
             "id" => 1001,
@@ -510,6 +462,7 @@ private
 
       def starting_environments
         [{
+            "id" => 200,
             "ssh_username" => "turkey",
             "instances" => [{
                 "status" => "running",
@@ -521,7 +474,6 @@ private
             "instances_count" => 1,
             "stack_name" => "nginx_mongrel",
             "framework_env" => "production",
-            "id" => 200,
             "app_master" => {
               "status" => "running",
               "id" => 27220,
@@ -530,6 +482,7 @@ private
               "public_hostname" => "ec2-174-129-198-124.compute-1.amazonaws.com",
             },
           }, {
+            "id" => 202,
             "ssh_username" => "ham",
             "instances" => [{
                 "public_hostname" => '127.3.2.1',
@@ -540,7 +493,6 @@ private
             "name" => "railsapp_staging",
             "instances_count" => 1,
             "stack_name" => "nginx_passenger",
-            "id" => 202,
             "framework_env" => "production",
             "app_master" => {
               "public_hostname" => '127.3.2.1',
