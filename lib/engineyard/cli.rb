@@ -5,6 +5,7 @@ require 'engineyard/thor'
 module EY
   class CLI < EY::Thor
     autoload :API,     'engineyard/cli/api'
+    autoload :Keys,    'engineyard/cli/keys'
     autoload :UI,      'engineyard/cli/ui'
     autoload :Recipes, 'engineyard/cli/recipes'
     autoload :Web,     'engineyard/cli/web'
@@ -211,6 +212,9 @@ module EY
 
     desc "recipes", "Commands related to chef recipes."
     subcommand "recipes", EY::CLI::Recipes
+
+    desc "keys", "Commands related to ssh keys."
+    subcommand "keys", EY::CLI::Keys
 
     desc "web", "Commands related to maintenance pages."
     subcommand "web", EY::CLI::Web

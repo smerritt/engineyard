@@ -50,12 +50,20 @@ class FakeAwsm < Sinatra::Base
     {"apps" => @@scenario.apps}.to_json
   end
 
+  get "/api/v2/keypairs" do
+    {"keypairs" => @@scenario.keypairs}.to_json
+  end
+
   get "/api/v2/environments" do
     {"environments" => @@scenario.environments}.to_json
   end
 
   get "/api/v2/environments/:env_id/logs" do
     {"logs" => @@scenario.logs(params[:env_id])}.to_json
+  end
+
+  get "/api/v2/environments/:env_id/keypairs" do
+    {"keypairs" => @@scenario.keypairs(params[:env_id])}.to_json
   end
 
   get "/api/v2/environments/:env_id/recipes" do
@@ -131,6 +139,10 @@ private
       end
 
       def environments
+        []
+      end
+
+      def keypairs(*args)
         []
       end
     end # Empty
@@ -237,6 +249,15 @@ private
           "role" => "app_master",
           "main" => "MAIN LOG OUTPUT",
           "custom" => "CUSTOM LOG OUTPUT"
+        }]
+      end
+
+      def keypairs(env_id)
+        [{
+          "id" => "1",
+          "name" => "id_dsa.pub",
+          "public_key" => "ssh-dss AAAAB3NzaC1kc3MAAACBAOpTvNnhAZzl/LT7L2Oj2EQ3I4JMP0cwSwu+80zrNiWpChXcyIbLHDBQ76Vc2mFj4zNkV2s9WPSWZ4Pwbuq6FxfldI1tXJkRNFBJxnV8T3Wzxv/lCDXObveArhlMjlUw84juTFv5oQwE1Z3dPYTsytoKKeRlJLtNCic2Trjj6D97AAAAFQDLwRE+7tOTWha2rG5f036+6pYsNwAAAIBXsaU2a606eQxfwWojwiPui3eEM/1OAxOf09Ol1BhaSOSbVgjKrCN6ALfU+vE99oMSTXh1+xYlVXjm/1uyoQTZcj/Tn6r3nsnpdSy4BZHK7GmdLGGXG1SvOPRZShDlKvTKbRbaLojFMJlBWcquWexRrk2RqqtczSOeizESgpEI5AAAAIEApLlM2Hhw49hwydqKIU0yYh3gx30/fgjckwnS21n35sMnFvRIKY83PKBatr3q6t+DWP+b5BAlMDpq4yAl6wR/2x6+NnFqrCliqfXBnSOPqhejaGoGK1CWDcMBT5pOGFtce+QuhvuEn6oZQJID4pGIPL6bMBV22fKFLH38gQwS61c= spam@octavius",
+          "fingerprint" => "7e:ad:2b:9c:76:31:ff:01:1f:db:e9:b2:1f:ce:35:98"
         }]
       end
     end # LinkedApp

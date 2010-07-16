@@ -30,6 +30,10 @@ module EY
       @apps ||= EY::Model::App.from_array(request('/apps')["apps"], :api => self)
     end
 
+    def keys
+      @keys ||= EY::Model::Key.from_array(request('/keypairs')['keypairs'], :api => self)
+    end
+
     def app_for_repo(repo)
       apps.find{|a| repo.urls.include?(a.repository_uri) }
     end
