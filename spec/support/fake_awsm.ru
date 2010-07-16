@@ -352,48 +352,22 @@ private
       end
     end
 
-    class OneAppManyEnvs < Empty
-      def apps
-        apps = [{
+    class OneAppManyEnvs < Base
+      def starting_apps
+        [{
+            "id" => 1001,
             "name" => "rails232app",
-            "repository_uri" => git_remote
-          }]
-
-        [{"name" => "rails232app",
-            "environments" => [{
-                "ssh_username" => "turkey",
-                "instances" => [{
-                    "status" => "running",
-                    "id" => 27220,
-                    "amazon_id" => 'i-ddbbdd92',
-                    "role" => "solo",
-                    "public_hostname" => "ec2-174-129-198-124.compute-1.amazonaws.com"}],
-                "name" => "giblets",
-                "apps" => apps,
-                "instances_count" => 1,
-                "stack_name" => "nginx_mongrel",
-                "id" => 200,
-                "framework_env" => "production",
-                "app_master" => {
-                  "status" => "running",
-                  "id" => 27220,
-                  "amazon_id" => 'i-ddbbdd92',
-                  "role" => "solo",
-                  "public_hostname" => "ec2-174-129-198-124.compute-1.amazonaws.com"}
-              }, {
-                "ssh_username" => "ham",
-                "instances" => [],
-                "name" => "bakon",
-                "apps" => apps,
-                "instances_count" => 0,
-                "stack_name" => "nginx_passenger",
-                "id" => 8371,
-                "app_master" => nil,
-              }],
             "repository_uri" => git_remote}]
       end
 
-      def environments
+      def starting_app_joins
+        [
+          [1001, 200],
+          [1001, 202],
+        ]
+      end
+
+      def starting_environments
         [{
             "ssh_username" => "turkey",
             "instances" => [{
@@ -403,9 +377,6 @@ private
                 "role" => "solo",
                 "public_hostname" => "ec2-174-129-198-124.compute-1.amazonaws.com"}],
             "name" => "giblets",
-            "apps" => [{
-                "name" => "rails232app",
-                "repository_uri" => git_remote}],
             "instances_count" => 1,
             "stack_name" => "nginx_mongrel",
             "id" => 200,
@@ -420,21 +391,17 @@ private
             "ssh_username" => "ham",
             "instances" => [],
             "name" => "bakon",
-            "apps" => [{
-                "name" => "rails232app",
-                "repository_uri" => git_remote}],
             "instances_count" => 0,
             "stack_name" => "nginx_passenger",
-            "id" => 8371,
+            "id" => 202,
             "app_master" => nil,
           }, {
             "ssh_username" => "hamburger",
             "instances" => [],
             "name" => "beef",
-            "apps" => [],
             "instances_count" => 0,
             "stack_name" => "nginx_passenger",
-            "id" => 8372,
+            "id" => 206,
             "app_master" => nil,
           }]
       end
