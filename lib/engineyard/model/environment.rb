@@ -22,7 +22,7 @@ module EY
       end
 
       def keys
-        Key.from_array(api_get("/environments/#{id}/keypairs"))
+        Key.from_array(api_get("/environments/#{id}/keypairs")["keypairs"], :api => api)
       end
 
       def app_master!

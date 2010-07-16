@@ -554,80 +554,15 @@ private
       end
     end # TwoApps
 
-    class OneAppManySimilarlyNamedEnvs < Empty
-      def apps
-        apps = [{
+    class OneAppManySimilarlyNamedEnvs < Base 
+      def starting_apps
+        [{
+            "id" => 1001,
             "name" => "rails232app",
-            "repository_uri" => git_remote
-          }]
-
-        [{"name" => "rails232app",
-            "environments" => [{
-                "ssh_username" => "turkey",
-                "instances" => [{
-                    "status" => "running",
-                    "id" => 27220,
-                    "amazon_id" => 'i-ddbbdd92',
-                    "role" => "solo",
-                    "public_hostname" => "ec2-174-129-198-124.compute-1.amazonaws.com"}],
-                "name" => "railsapp_production",
-                "apps" => apps,
-                "instances_count" => 1,
-                "stack_name" => "nginx_mongrel",
-                "framework_env" => "production",
-                "id" => 200,
-                "app_master" => {
-                  "status" => "running",
-                  "id" => 27220,
-                  "amazon_id" => 'i-ddbbdd92',
-                  "role" => "solo",
-                  "public_hostname" => "ec2-174-129-198-124.compute-1.amazonaws.com",
-                },
-              }, {
-                "ssh_username" => "ham",
-                "instances" => [{
-                    "public_hostname" => '127.3.2.1',
-                    "status" => "running",
-                    "id" => 63066,
-                    "role" => "solo",
-                  }],
-                "name" => "railsapp_staging",
-                "apps" => apps,
-                "instances_count" => 1,
-                "stack_name" => "nginx_passenger",
-                "id" => 8371,
-                "framework_env" => "production",
-                "app_master" => {
-                  "public_hostname" => '127.3.2.1',
-                  "status" => "running",
-                  "id" => 63066,
-                  "role" => "solo",
-                },
-              }, {
-                "ssh_username" => "ham",
-                "instances" => [{
-                    "status" => "running",
-                    "id" => 59395,
-                    "role" => "solo",
-                    "public_hostname" => "ec2-174-129-198-124.compute-1.amazonaws.com",
-                  }],
-                "name" => "railsapp_staging_2",
-                "apps" => apps,
-                "instances_count" => 1,
-                "stack_name" => "nginx_passenger",
-                "id" => 8371,
-                "framework_env" => "production",
-                "app_master" => {
-                  "public_hostname" => '127.44.55.66',
-                  "status" => "running",
-                  "id" => 59395,
-                  "role" => "solo",
-                },
-              }],
             "repository_uri" => git_remote}]
       end
 
-      def environments
+      def starting_environments
         [{
             "ssh_username" => "turkey",
             "instances" => [{
@@ -637,77 +572,64 @@ private
                 "role" => "solo",
                 "public_hostname" => "ec2-174-129-198-124.compute-1.amazonaws.com"}],
             "name" => "railsapp_production",
-            "apps" => [{
-                "name" => "rails232app",
-                "repository_uri" => git_remote}],
             "instances_count" => 1,
             "stack_name" => "nginx_mongrel",
-            "id" => 200,
             "framework_env" => "production",
+            "id" => 200,
             "app_master" => {
-              "public_hostname" => "ec2-174-129-198-124.compute-1.amazonaws.com",
               "status" => "running",
               "id" => 27220,
               "amazon_id" => 'i-ddbbdd92',
-              "role" => "solo"},
+              "role" => "solo",
+              "public_hostname" => "ec2-174-129-198-124.compute-1.amazonaws.com",
+            },
           }, {
             "ssh_username" => "ham",
             "instances" => [{
                 "public_hostname" => '127.3.2.1',
                 "status" => "running",
                 "id" => 63066,
-                "amazon_id" => 'i-09fec72a',
                 "role" => "solo",
               }],
             "name" => "railsapp_staging",
-            "apps" => [{
-                "name" => "rails232app",
-                "repository_uri" => git_remote}],
             "instances_count" => 1,
             "stack_name" => "nginx_passenger",
-            "id" => 8371,
+            "id" => 202,
             "framework_env" => "production",
             "app_master" => {
               "public_hostname" => '127.3.2.1',
               "status" => "running",
               "id" => 63066,
-              "amazon_id" => 'i-09fec72a',
               "role" => "solo",
             },
           }, {
-            "ssh_username" => "chicken",
+            "ssh_username" => "ham",
             "instances" => [{
-                "public_hostname" => '127.44.55.66',
                 "status" => "running",
                 "id" => 59395,
-                "amazon_id" => 'i-1aa1e271',
                 "role" => "solo",
+                "public_hostname" => "ec2-174-129-198-124.compute-1.amazonaws.com",
               }],
             "name" => "railsapp_staging_2",
-            "apps" => [{
-                "name" => "rails232app",
-                "repository_uri" => git_remote}],
             "instances_count" => 1,
             "stack_name" => "nginx_passenger",
-            "id" => 8371,
+            "id" => 204,
             "framework_env" => "production",
             "app_master" => {
               "public_hostname" => '127.44.55.66',
               "status" => "running",
               "id" => 59395,
-              "amazon_id" => 'i-1aa1e271',
               "role" => "solo",
             },
           }]
       end
 
-      def logs(env_id)
-        [{
-            "id" => env_id,
-            "role" => "app_master",
-            "main" => "MAIN LOG OUTPUT",
-            "custom" => "CUSTOM LOG OUTPUT"
-          }]
+      def starting_app_joins
+        [
+          [1001, 200],
+          [1001, 202],
+          [1001, 204],
+        ]
       end
     end  # OneAppManySimilarlyNamedEnvs
   end

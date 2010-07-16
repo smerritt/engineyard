@@ -73,9 +73,9 @@ describe "ey ssh --all with a command" do
   it "runs the command on all servers" do
     api_scenario "one app, one environment"
     run_ey(:env => 'giblets', :verbose => true)
-    @raw_ssh_commands.count do |command|
+    @raw_ssh_commands.find_all do |command|
       command =~ /^ssh turkey@.+ ls$/
-    end.should == 4
+    end.size.should == 4
   end
 end
 
