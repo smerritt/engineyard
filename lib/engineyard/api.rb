@@ -34,6 +34,11 @@ module EY
       @keys ||= EY::Model::Key.from_array(request('/keypairs')['keypairs'], :api => self)
     end
 
+    def create_key(attributes)
+      @keys = nil
+      EY::Model::Key.from_hash(request('/keypairs', :method => :post, :params => attributes)['keypair'])
+    end
+
     def app_for_repo(repo)
       apps.find{|a| repo.urls.include?(a.repository_uri) }
     end

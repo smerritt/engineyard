@@ -10,7 +10,7 @@ class FakeAwsm < Sinatra::Base
     # every request. It makes sense; you hardly ever want to keep
     # state in your application object (accidentally or otherwise),
     # but in this situation that's exactly what we want to do.
-    @@cloud_mock = Scenario::Base  # have to start somewhere
+    @@cloud_mock = CloudMock.new(Scenario::Base.new('git@remote:repo.git'))  # have to start somewhere
   end
 
   before { content_type "application/json" }
@@ -51,7 +51,12 @@ class FakeAwsm < Sinatra::Base
   end
 
   get "/api/v2/keypairs" do
-    {"keypairs" => @@cloud_mock.keypairs}.to_json
+    {"keypairs" => @@cloud_mock.keys}.to_json
+  end
+
+  post "/api/v2/keypairs" do
+    key = @@cloud_mock.add_key(params)
+    {"keypair" => key}.to_json
   end
 
   get "/api/v2/environments" do
