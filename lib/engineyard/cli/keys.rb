@@ -25,11 +25,12 @@ module EY
         else
           env = fetch_environment(options[:environment])
           key_table = env.keys.map do |key|
-            [key.name, key.fingerprint]
+            [key.name, key.fingerprint, key.environments.map{|e| e.name}.join(' ')]
           end
           print_table key_table, :truncate => false, :colwidth => env.keys.map{|k| k.name.length}.max
         end
       end
+
     end
   end
 end

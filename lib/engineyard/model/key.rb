@@ -1,14 +1,14 @@
 module EY
   module Model
-    class Key < ApiStruct.new(:id, :name, :public_key, :fingerprint)
+    class Key < ApiStruct.new(:id, :name, :public_key, :fingerprint, :api)
 
-      # def find_locally(key_dir = File.join(ENV['HOME'], ".ssh"))
-      #   Dir.chdir(key_dir) do
-      #     Dir.glob["*.pub"].find do |public_key_file|
-      #       File.read(public_key_file).strip == public_key.strip
-      #     end
-      #   end
-      # end
+      def environments
+        @environments ||=
+          begin
+            raw_envs = api.request("/keypairs/#{id}/environments")["environments"]
+            Collection::Environments[*Environment.from_array(raw_envs, :api => api)]
+          end
+      end
 
     end
   end
