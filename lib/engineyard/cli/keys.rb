@@ -23,7 +23,6 @@ module EY
           print_table api.keys.map { |key| [key.name, key.fingerprint] }
         else
           env = fetch_environment(options[:environment])
-          puts "Keys for #{env}"
           key_table = env.keys.map do |key|
             [key.name, key.fingerprint]
           end
