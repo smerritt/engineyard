@@ -16,13 +16,19 @@ module EY
       desc "list", "Show ssh keys on your account or an environment"
       method_option :environment, :type => :string, :aliases => %w(-e),
         :desc => "Environment of which to show keys"
+      method_option :all, :type => :boolean,
+        :desc => "Show all keys"
       def list
-        env = fetch_environment(options[:environment])
-        puts "Keys for #{env}"
-        key_table = env.keys.map do |key|
-          [key.name, key.fingerprint]
+        if options[:all]
+          print_table api.keys.map { |key| [key.name, key.fingerprint] }
+        else
+          env = fetch_environment(options[:environment])
+          puts "Keys for #{env}"
+          key_table = env.keys.map do |key|
+            [key.name, key.fingerprint]
+          end
+          print_table key_table
         end
-        print_table key_table
       end
 
     end

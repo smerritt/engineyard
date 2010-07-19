@@ -106,6 +106,7 @@ shared_examples_for "integration" do
     token = { ENV['CLOUD_URL'] => {
         "api_token" => "f81a1706ddaeb148cfb6235ddecfc1cf"} }
     File.open(ENV['EYRC'], "w"){|f| YAML.dump(token, f) }
+    @api = EY::API.new('f81a1706ddaeb148cfb6235ddecfc1cf')
   end
 end
 

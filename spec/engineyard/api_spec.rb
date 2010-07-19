@@ -87,6 +87,6 @@ describe EY::API do
 
       new_keys.size.should_not == old_keys.size
     end
-
   end
+
 end

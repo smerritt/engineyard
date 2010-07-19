@@ -16,3 +16,13 @@ describe "ey keys list" do
   # common behavior
   it_should_behave_like "it takes an environment name"
 end
+
+describe "ey keys list --all" do
+  given "integration"
+
+  it "shows all your keys" do
+    @api.create_key(:name => 'unattached-key', :public_key => 'blahblah')
+    ey "keys list --all"
+    @out.should include('unattached-key')
+  end
+end
