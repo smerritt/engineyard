@@ -10,6 +10,11 @@ module EY
           end
       end
 
+      def associate(environment)
+        @environments = nil
+        api.request("/environments/#{environment.id}/keypairs/#{id}", :method => :put)
+      end
+
     end
   end
 end
