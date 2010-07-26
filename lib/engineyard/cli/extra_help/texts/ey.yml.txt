@@ -1,0 +1,62 @@
+
+Customizing deploys with ey.yml
+===============================
+
+ey.yml is a file that lives in your application's config/
+directory. It allows you to customize the deploy process to a limited,
+but still useful, extent.
+
+
+Examples
+========
+
+All these examples assume your environment is “myapp_staging”. Replace
+that with your environment's actual name.
+
+To avoid copying your .git directory with each release, put this in
+your config/ey.yml:
+
+---
+environments:
+  myapp_staging:
+    copy_exclude:
+      - .git
+
+To set a default branch to deploy, put this in your config/ey.yml:
+
+---
+environments:
+  myapp_staging:
+    branch: master
+
+
+Structure
+=========
+
+config/ey.yml is (of course) a YAML document. It is a hash with a
+single top-level key "environments" whose value is another hash
+mapping environment names to hashes containing customizations for that
+environment.
+
+Look at the examples; they're a whole lot clearer than the preceding
+paragraph.
+
+
+Passing Values to Deploy Hooks
+==============================
+
+Anything you set in the per-environment hash is available to your
+deploy hooks. That is, if your config/ey.yml looks like this:
+
+---
+environments:
+  myapp_staging:
+    food: fish
+    form: sticks
+
+then, in your deploy hook, @configuration['food'] == 'fish' and
+@configuration['form'] == 'sticks'.
+
+Of course, any data structure that can be represented in YAML can go
+into the per-environment configuration; you're not limited to simple
+strings.

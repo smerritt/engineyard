@@ -4,10 +4,11 @@ require 'engineyard/thor'
 
 module EY
   class CLI < EY::Thor
-    autoload :API,     'engineyard/cli/api'
-    autoload :UI,      'engineyard/cli/ui'
-    autoload :Recipes, 'engineyard/cli/recipes'
-    autoload :Web,     'engineyard/cli/web'
+    autoload :API,       'engineyard/cli/api'
+    autoload :ExtraHelp, 'engineyard/cli/extra_help'
+    autoload :UI,        'engineyard/cli/ui'
+    autoload :Recipes,   'engineyard/cli/recipes'
+    autoload :Web,       'engineyard/cli/web'
 
     check_unknown_options!
 
@@ -292,10 +293,20 @@ module EY
           EY.ui.say
         end
 
+        EY.ui.say "Additional documentation:"
+        extra_topics = ExtraHelp.topics.map do |topic|
+          [topic.keyword, "# #{topic.short_description}"]
+        end
+        EY.ui.print_help(extra_topics)
+        EY.ui.say
+
         self.class.send(:class_options_help, shell)
         EY.ui.say "See '#{base} help COMMAND' for more information on a specific command."
       elsif klass = self.class.subcommand_class_for(cmds.first)
         klass.new.help(*cmds[1..-1])
+      elsif topic = ExtraHelp[cmds.first]
+        puts topic.long_help
+        puts
       else
         super
       end
