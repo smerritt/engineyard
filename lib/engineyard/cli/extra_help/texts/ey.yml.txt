@@ -30,6 +30,37 @@ environments:
     branch: master
 
 
+To use thor to run migrations, but to only run them when you specify
+--migrate, use this:
+
+---
+environments:
+  myapp_staging:
+    migration_command: thor db:migrate
+    migrate: false
+
+
+Fields of Note
+==============
+
+The engineyard gem pays attention to four keys in the per-environment
+hash. They are:
+
+ * copy_exclude (array): items that will be excluded when copying from
+   your repository to each release. See rsync(1), in particular the
+   --exclude option, for more details. Default is to not exclude
+   anything.
+
+ * branch (string): the branch to deploy by
+   default. Default is "master".
+
+ * migration_command (string): the command to invoke in order to run
+   migrations. Default is "rake db:migrate".
+
+ * migrate (boolean): whether or not to run migrations. Default is
+   true.
+
+
 Structure
 =========
 
